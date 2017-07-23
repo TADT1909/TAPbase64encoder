@@ -3,7 +3,19 @@
 # TAP media base64 encoder version 1.3.1
 # Being Improved
 # 22 July 2017
-#   handle error: IOError, urllib.error.URLError, urllib.error.HTTPError
+#   handle error: IOError, urllib.error.URLError, urllib.error.HTTPError, ValueError
+#
+#   still have error in "get file name":
+#     need to continue to type in file name after find that the past file entered not valid
+#
+#      have error when select language, not type in anything, just "Enter"
+#         Traceback (most recent call last):
+#       File "TAPbase64encoder.py", line 250, in <module>
+#         main()
+#       File "TAPbase64encoder.py", line 178, in main
+#         print ("\n",lang[4],lang[5],lang[6],lang[7],lang[8],)
+#     NameError: name 'lang' is not defined
+#
 # 21 July 2017
 #   add Vietnamese
 #   add Continue() function
@@ -28,7 +40,7 @@
 # Preference:
 # https://code.tutsplus.com/tutorials/base64-encoding-and-decoding-using-python--cms-25588
 # """
-import os, base64, pyperclip, urllib.request
+import os, sys, base64, pyperclip, urllib.request
 en = [
     "Url?\n",
     "File Name or File Path?\n",
@@ -49,7 +61,8 @@ en = [
     "Do you want to encode other file? [y/n]",
     "\n\tNo such file or directory!",
     "File Name or File Path to save this file?\n",
-    """\n\tNo connection could be made because the target machine actively refused it\n\tor There is not such file"""
+    """\n\tNo connection could be made because the target machine actively refused it\n\tor There is not such file""",
+    "\n\tUnknown URL type",
     ]
 vi = [
     "Link download file?\n",
@@ -71,22 +84,23 @@ vi = [
     "Ban co muon ma hoa file nao nua khong? [y/n]",
     "\n\tKhong co file hay dia chi nhu vay",
     "Ten hoac dia chi file ban muon luu vao?\n",
-    "\n\tKhong the tai vi trang web khong cho phep\n\tHoac khong ton tai file nay"
+    "\n\tKhong the tai vi trang web khong cho phep\n\tHoac khong ton tai file nay",
+    "\n\tDinh dang URL khong chinh xac",
     ]
 def GetUrl():
-  url = input(lang[0])
-  return url
+  _url = input(lang[0])
+  return _url
 
-def GetFileName(fileNameprompt):
-  fileName = input(fileNameprompt)
-  return fileName
+def GetFileName(_fileNameprompt):
+  _fileName = input(_fileNameprompt)
+  return _fileName
 
 def GetFileType():
-  fileType = input(lang[2])
-  return fileType
+  _fileType = input(lang[2])
+  return _fileType
 
-def DownloadFile(url, fileName):
-  with urllib.request.urlopen(url) as response, open(fileName, 'wb') as out_file:
+def DownloadFile(_url, _fileName):
+  with urllib.request.urlopen(_url) as response, open(_fileName, 'wb') as out_file:
       data = response.read() # a `bytes` object
       out_file.write(data)
 
@@ -104,18 +118,18 @@ def DeleteFile():
 def Completed():
   print(lang[14])
 
-def EncodeBase64(fileName, fileType, mediaType):
+def EncodeBase64(_fileName, _fileType, _mediaType):
   # read input file
-  file = open(fileName, 'rb') #open binary file in read mode
+  file = open(_fileName, 'rb') #open binary file in read mode
   file_read = file.read()
   # encode file
   file_64_encode = base64.encodestring(file_read)
   file_64_encode_string = file_64_encode.decode(encoding='UTF-8')
   # get full format text
   full_string = "data:"
-  full_string += mediaType
+  full_string += _mediaType
   full_string += "/"
-  full_string += fileType
+  full_string += _fileType
   full_string += ";base64,"
   full_string += file_64_encode_string
   # copy text to clipboard
@@ -132,11 +146,12 @@ def Continue():
         main()
       elif cont == "n" or cont == "N" or cont == "no" or cont == "No":
         print(lang[15])
-        exit()
+        sys.exit()
       else :
         print(lang[9])
 
 def language():
+  global lang
   langChoice = True
   while langChoice:
       print ("""\tChon ngon ngu cua ban
@@ -146,26 +161,28 @@ def language():
       """)
       langChoice = input("\t")
       if langChoice == "1" or langChoice.upper() == "VI" or langChoice.upper() == "V" or langChoice.upper() == "TIENG VIET":
-        global lang
         lang = vi
         langChoice = False
       elif langChoice == "2" or langChoice.upper() == "EN" or langChoice.upper() == "E" or langChoice.upper() == "ENGLISH":
         lang = en
         langChoice = False
-      elif langChoice !="":
-        print("\n\tLua chon sai! Hay nhap lai\n\tNot Valid Choice! Try again\n")
+      elif langChoice !="" or langChoice =="\n":
+        print("\tLua chon sai! Hay nhap lai\n\tNot Valid Choice! Try again\n")
+      else:
+        print("\tLua chon sai! Hay nhap lai\n\tNot Valid Choice! Try again\n")
 
 def main():
+  global fileName
   ans=True
   while ans:
       print ("\n",lang[4],lang[5],lang[6],lang[7],lang[8],)
       ans=input(lang[3])
       if ans=="1":
         print(lang[4])
+        fileName = GetFileName(lang[1])
+        fileType = GetFileType()
+        mediaType = "image"
         try:
-          fileName = GetFileName(lang[1])
-          fileType = GetFileType()
-          mediaType = "image"
           EncodeBase64(fileName, fileType, mediaType)
         except IOError:
           print(lang[17],"\n",lang[10])
@@ -175,14 +192,16 @@ def main():
 
       elif ans=="2":
         print(lang[5])
+        url = GetUrl()
+        fileName = GetFileName(lang[18])
+        fileType = GetFileType()
+        mediaType = "image"
         try:
-          url = GetUrl()
-          fileName = GetFileName(lang[18])
-          fileType = GetFileType()
-          mediaType = "image"
           DownloadFile(url, fileName)
         except (urllib.error.URLError, urllib.error.HTTPError):
           print(lang[19], lang[10])
+        except ValueError:
+          print(lang[20], lang[10])
         else:
           EncodeBase64(fileName, fileType, mediaType)
           DeleteFile()
@@ -190,12 +209,10 @@ def main():
           Continue()
       elif ans=="3":
         print(lang[6])
-        if ans=="1":
-          print(lang[4])
+        fileName = GetFileName(lang[1])
+        fileType = GetFileType()
+        mediaType = "video"
         try:
-          fileName = GetFileName(lang[1])
-          fileType = GetFileType()
-          mediaType = "video"
           EncodeBase64(fileName, fileType, mediaType)
         except IOError:
           print(lang[17],"\n",lang[10])
@@ -204,11 +221,11 @@ def main():
           Continue()
       elif ans=="4":
         print(lang[7])
+        url = GetUrl()
+        fileName = GetFileName(lang[18])
+        fileType = GetFileType()
+        mediaType = "video"
         try:
-          url = GetUrl()
-          fileName = GetFileName(lang[18])
-          fileType = GetFileType()
-          mediaType = "video"
           DownloadFile(url, fileName)
         except (urllib.error.URLError, urllib.error.HTTPError):
           print(lang[19], lang[10])
@@ -219,7 +236,7 @@ def main():
           Continue()
       elif ans=="5":
         print(lang[15])
-        exit()
+        sys.exit()
       elif ans !="":
         print(lang[8], lang[9])
 
