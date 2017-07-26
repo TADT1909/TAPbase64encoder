@@ -2,6 +2,8 @@
 # """
 # TAP media base64 encoder version 1.3.1
 # Being Improved
+# 26 July 2017
+#   add user agent to Download function
 # 23 July 2017
 #   fix lang... error
 #   use "from sys import exit" instead of "import sys"
@@ -106,7 +108,14 @@ def GetFileType():
   return _fileType
 
 def DownloadFile(_url, _fileName):
-  with urllib.request.urlopen(_url) as response, open(_fileName, 'wb') as out_file:
+  req = urllib.request.Request(
+    _url, 
+    data=None, 
+    headers={
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.6; rv:25.0)  AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36'
+    }
+  )
+  with urllib.request.urlopen(req) as response, open(_fileName, 'wb') as out_file:
       data = response.read() # a `bytes` object
       out_file.write(data)
 

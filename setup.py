@@ -14,6 +14,7 @@ setup(
             "icon_resources": [(0, "icon.ico")],
             "dest_base":"TAPbase64encoder"
             }],
-	options = {'py2exe': {'bundle_files': 1, 'compressed': True,"includes":["sip"]}},
+	options = {'py2exe': {'bundle_files': 1, 'compressed': True, "includes":["sip"],  'dist_dir': "export"}},
 	zipfile = None,
+
 	)
