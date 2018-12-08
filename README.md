@@ -8,4 +8,5 @@
 You can download .rar file (x86 or x64 version) to use directly.
 
 #### For Linux and Mac OS
-You can download file TAPbase64encoder.py and install Python 3, pyperclip library to use.
+You can download file 'TAPbase64encoder.py' and install Python 3, `pyperclip` library to use.
+ > `python -m pip install pyperclip`
